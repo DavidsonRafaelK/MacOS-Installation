@@ -1,92 +1,204 @@
-# MacOS Installation Guide
+# macOS Installation Guide on VMware Workstation
 
 ## Table of Contents
 1. [Requirements](#requirements)
 2. [Installation](#installation)
+3. [Troubleshooting](#troubleshooting)
+
+---
 
 ## Requirements
-To install MacOS on VMware Workstation, ensure you have the following:
 
-- **VMware Workstation**: Virtualization software.
-- **MacOS Image (ISO)**: The installation image for MacOS.
-- **RAM**: Minimum 8GB.
-- **Disk Space**: Minimum 70GB of free space.
-- **VMware Unlocker**: A tool to unlock the MacOS option in VMware.
+To install macOS on VMware Workstation, ensure you have the following:
+
+- **VMware Workstation Pro**: Virtualization software. **Now free for personal and commercial use** since May 2024.
+- **macOS Image (ISO)**: The installation image for macOS Sequoia 15.
+- **RAM**: Minimum 8 GB (16 GB recommended).
+- **Disk Space**: Minimum 70 GB of free space (200 GB recommended).
+- **VMware Unlocker (DrDonk)**: A tool to unlock the macOS option in VMware Workstation.
+- **CPU with AVX2 support**: Required for macOS 13 and above.
+- **Virtualization enabled in BIOS**: AMD-V (for AMD) or Intel VT-x (for Intel) must be enabled.
+
+> **⚠️ AMD Users**: Hyper-V and Windows Memory Integrity **must be disabled** before proceeding. See [Pre-Installation Notes for AMD](#pre-installation-notes-for-amd-users).
+
+---
 
 ## Installation
 
 ### Step 1: Download the Requirements
-1. **VMware Workstation**:
-   - Go to the [VMware Workstation download page](https://support.broadcom.com/group/ecx/my-dashboard).
-   - Register for an account if necessary to download the software.
-   - Follow these steps to download:
-     ```plaintext
-     Dashboard > All Product > Search: VMware > Product Detail > Download > Accept Terms and Conditions > Enter Your Address > Download
-     ```
 
-2. **MacOS ISO**:
-   - Visit [Olarila](https://www.olarila.com/).
-   - Search for the appropriate MacOS version compatible with your hardware.
-   - Download the ISO file.
+#### 1. VMware Workstation Pro
+- Go to the [Broadcom portal](https://access.broadcom.com/).
+- Register for a free account if necessary.
+- Navigate to: `Dashboard > All Products > Search: VMware Workstation Pro > Download`.
+- Accept the terms and conditions, then download the installer.
+- During installation, select **"Personal Use"** when prompted for license type — no license key required.
 
-3. **VMware Unlocker**:
-   - Visit the [VMware Unlocker GitHub page](https://github.com/paolo-projects/unlocker).
-   - Download the latest version of VMware Unlocker.
+#### 2. macOS Sequoia ISO
+- Visit [Olarila](https://www.olarila.com/) and search for **macOS Sequoia 15**.
+- Download the ISO file appropriate for your setup.
 
-### Step 2: Prepare VMware Workstation
-1. **Install VMware Workstation**:
-   - Follow the installation instructions provided on the VMware website.
-  
-2. **Install VMware Unlocker**:
-   - Extract the downloaded VMware Unlocker files.
-   - Run the appropriate script for your OS (e.g., `win-install.cmd` for Windows) with administrator privileges.
+#### 3. VMware Unlocker (DrDonk v4.2.7)
+- Visit the [DrDonk Unlocker Releases page](https://github.com/DrDonk/unlocker/releases).
+- Download the latest release (`unlocker427.zip` or the most recent available).
+- This version supports VMware Workstation 16/17 and is actively maintained.
 
-### Step 3: Create a New Virtual Machine
-1. Open VMware Workstation.
-2. Select "Create a New Virtual Machine".
-3. Choose "Custom (Advanced)" configuration.
-4. Set the guest operating system:
-   - Select "Apple Mac OS X".
-   - Choose the version (e.g., MacOS 14).
-5. Allocate system resources:
-   - **Processor**: Allocate the number of processors and cores (recommended: 4 processors and 4 cores).
-   - **Memory**: Allocate at least 8GB of RAM.
-6. Configure network type:
-   - Choose either "NAT" or "Bridged" network.
-7. Set up the virtual disk:
-   - Select "Create a new virtual disk".
-   - Allocate a maximum disk size (recommended: 200GB).
-   - Choose "Store virtual disk as a single file".
-8. Finish the setup.
+> **Note**: The previously referenced `paolo-projects/unlocker` only supports VMware Workstation 11–15 and has been archived. Use the DrDonk version instead.
 
-### Step 4: Install MacOS
-1. Start the newly created virtual machine.
-2. Mount the MacOS ISO file to the virtual machine’s CD/DVD drive.
-3. Close VMware Workstation and navigate to the folder where your virtual machine files are stored (e.g., `Documents > Virtual Machines`).
-4. Open the `.vmx` file with a text editor such as Notepad or VSCode.
-5. Add the following line at the end of the file:
-   ```plaintext
-   smc.version = "0"
+---
+
+### Step 2: Pre-Installation Notes for AMD Users
+
+If you are on an **AMD processor**, complete these steps before installing VMware:
+
+1. **Disable Hyper-V**: Open PowerShell as Administrator and run:
    ```
-   **For AMD Processors, additionally add the following lines:**
-   ```plaintext
-   hw.model = "iMac20,2"
-   board-id = "Mac-AF89B6D9451A490B"
-   smc.version = "0"
-   cpuid.0.eax = "0000:0000:0000:0000:0000:0000:0000:1011"
-   cpuid.0.ebx = "0111:0101:0110:1110:0110:0101:0100:0111"
-   cpuid.0.ecx = "0110:1100:0110:0101:0111:0100:0110:1110"
-   cpuid.0.edx = "0100:1001:0110:0101:0110:1110:0110:1001"
-   cpuid.1.eax = "0000:0000:0000:0001:0000:0110:0111:0001"
-   cpuid.1.ebx = "0000:0010:0000:0001:0000:1000:0000:0000"
-   cpuid.1.ecx = "1000:0010:1001:1000:0010:0010:0000:0011"
-   cpuid.1.edx = "0000:0111:1000:1011:1111:1011:1111:1111"
+   bcdedit /set hypervisorlaunchtype off
    ```
-6. Save the `.vmx` file and close the text editor.
-7. Reopen VMware Workstation and start your virtual machine.
+   Restart your computer after running this command.
 
-By following these steps, you should be able to successfully install MacOS on VMware Workstation. Ensure all requirements are met and each step is carefully followed for a smooth installation process.
+2. **Disable Windows Memory Integrity**: Go to `Windows Security > Device Security > Core Isolation Details` and turn off Memory Integrity. Restart if prompted.
 
-### Credits:
-- [Paolo-Project](https://github.com/paolo-projects/unlocker)
-- [4fr33 on InsanelyMac](https://www.insanelymac.com/forum/topic/350387-install-macos-on-vmware-workstation-16-amd-ryzen/)
+3. **Enable AMD-V in BIOS**: Reboot and enter your BIOS/UEFI. Find the virtualization setting (usually under CPU or Advanced settings) and enable **AMD-V** or **SVM Mode**.
+
+Skipping these steps on AMD will cause VMware to fail or macOS to get stuck at the Apple logo.
+
+---
+
+### Step 3: Prepare VMware Workstation
+
+#### 1. Install VMware Workstation Pro
+- Run the installer and follow the on-screen instructions.
+- Select **Personal Use** when asked about the license type.
+
+#### 2. Install VMware Unlocker (DrDonk)
+- **Close VMware Workstation completely** before applying the unlocker.
+- Extract the downloaded `unlocker427.zip`.
+- Open the `windows` folder inside the extracted directory.
+- Right-click `unlock.exe` and select **"Run as administrator"**.
+- Wait for the process to complete. You should see a confirmation message when done.
+- If your antivirus flags the file, this is a known false positive — the Unlocker is written in Go, which commonly triggers false positives in Windows Defender. You can verify the SHA256 checksum from the GitHub release page.
+
+> **After any VMware update**, you must re-run `unlock.exe` as the update will overwrite the patched files.
+
+---
+
+### Step 4: Create a New Virtual Machine
+
+1. Open VMware Workstation Pro.
+2. Select **"Create a New Virtual Machine"**.
+3. Choose **"Custom (Advanced)"** configuration.
+4. When asked for the installation disc, select **"I will install the operating system later"**.
+5. Set the guest operating system:
+   - Select **"Apple Mac OS X"**.
+   - Choose **macOS 15** as the version (or the closest available option).
+6. Name the VM (e.g., `macOS Sequoia`) and choose a storage location.
+7. Allocate system resources:
+   - **Processors**: 2 processors, 4 cores each (or half your total physical cores).
+   - **Memory**: At least 8 GB (8192 MB).
+8. Configure network type: choose **NAT** or **Bridged** depending on your preference.
+9. Set up the virtual disk:
+   - Select **"Create a new virtual disk"**.
+   - Allocate a maximum disk size of **200 GB**.
+   - Choose **"Store virtual disk as a single file"**.
+10. Click **Finish**.
+
+---
+
+### Step 5: Configure and Edit the VMX File
+
+This step is critical. Before booting the VM, you must edit the VMX configuration file.
+
+1. After creating the VM, go to **VM Settings** and under the CD/DVD drive, attach the macOS Sequoia ISO.
+2. **Close VMware Workstation**.
+3. Navigate to the folder where your VM files are stored (e.g., `Documents\Virtual Machines\macOS Sequoia`).
+4. Open the `.vmx` file with a text editor such as Notepad or VS Code.
+
+#### For All Users (Intel and AMD):
+
+Find the line `board-id.reflectHost` and set it to `"FALSE"`. Also find `ethernet0.virtualDev` and set it to `"vmxnet3"`. Then add the following lines at the **end** of the file:
+
+```plaintext
+smc.version = "0"
+board-id = "Mac-AA95B1DDAB278B95"
+hw.model.reflectHost = "FALSE"
+hw.model = "iMac20,1"
+serialNumber.reflectHost = "FALSE"
+serialNumber = "C01234567890"
+```
+
+#### For AMD Processors — Additional Lines:
+
+AMD CPUs require additional CPUID masking to spoof an Intel CPU identity to the macOS kernel. Add all of the following lines at the end of the file (the general lines above **plus** these):
+
+```plaintext
+smc.version = "0"
+board-id = "Mac-AA95B1DDAB278B95"
+hw.model.reflectHost = "FALSE"
+hw.model = "iMac20,1"
+serialNumber.reflectHost = "FALSE"
+serialNumber = "C01234567890"
+cpuid.0.eax = "0000:0000:0000:0000:0000:0000:0000:1011"
+cpuid.0.ebx = "0111:0101:0110:1110:0110:0101:0100:0111"
+cpuid.0.ecx = "0110:1100:0110:0101:0111:0100:0110:1110"
+cpuid.0.edx = "0100:1001:0110:0101:0110:1110:0110:1001"
+cpuid.1.eax = "0000:0000:0000:0001:0000:0110:0111:0001"
+cpuid.1.ebx = "0000:0010:0000:0001:0000:1000:0000:0000"
+cpuid.1.ecx = "1000:0010:1001:1000:0010:0010:0000:0011"
+cpuid.1.edx = "0000:0111:1000:1011:1111:1011:1111:1111"
+```
+
+> **Why is this needed?** macOS does not officially support AMD hardware. These CPUID values spoof an Intel Core i7 identity to the macOS kernel so that it can boot normally. Without this, the VM will hang indefinitely at the Apple logo.
+
+5. Save the `.vmx` file and close the text editor.
+
+---
+
+### Step 6: Install macOS Sequoia
+
+1. Reopen VMware Workstation and start your virtual machine.
+2. When the installer boots, select your language.
+3. From the macOS utilities screen, open **Disk Utility**.
+4. Select **VMware Virtual SATA Hard Drive Media** from the sidebar.
+5. Click **Erase**, give the disk a name (e.g., `macOS`), and confirm with **Erase**.
+6. Close Disk Utility and click **Install macOS Sequoia**.
+7. Follow the on-screen instructions. The VM will restart several times — this is normal. The full installation typically takes 30–60 minutes.
+8. Complete the initial macOS setup (language, region, Apple ID, etc.).
+
+---
+
+### Step 7: Install VMware Tools
+
+After macOS is installed, installing VMware Tools will enable features such as display resolution adjustment, clipboard sharing, and drag-and-drop.
+
+1. In VMware Workstation, go to **VM > Install VMware Tools**.
+2. On Workstation Pro 16/17, the darwin.iso should be recognized automatically.
+3. Follow the installer prompts inside macOS.
+4. If the display resolution does not adjust automatically, run the following command in the macOS Terminal:
+   ```
+   sudo /Library/Application\ Support/VMware\ Tools/vmware-resolutionSet 1920 1080
+   ```
+
+---
+
+## Troubleshooting
+
+**Stuck at Apple logo (AMD)**: Verify that the CPUID lines were added correctly to the `.vmx` file. Ensure Hyper-V is disabled and AMD-V is enabled in BIOS.
+
+**"VMware Workstation Unrecoverable Error (vcpu 0)"**: The `smc.version = "0"` line is missing or incorrectly formatted. Re-open the `.vmx` file, verify the entry, and try again.
+
+**No internet in macOS**: Confirm that `ethernet0.virtualDev = "vmxnet3"` is set in the `.vmx` file.
+
+**Black screen or display issues**: Install VMware Tools (Step 7) and use the `vmware-resolutionSet` command to force the correct resolution.
+
+**VMware still shows no macOS option after running Unlocker**: Ensure VMware was fully closed before running `unlock.exe`. Re-run the unlocker as Administrator and restart VMware.
+
+**Cannot log in to the App Store**: This is a known issue in VM environments. Try going to `VM > Settings > Advanced` and enabling **"Pass power status to VM"**, then restart and attempt again.
+
+---
+
+## Credits
+
+- [DrDonk/unlocker](https://github.com/DrDonk/unlocker) — VMware macOS Unlocker v4 (actively maintained)
+- [4fr33 on InsanelyMac](https://www.insanelymac.com/forum/topic/350387-install-macos-on-vmware-workstation-16-amd-ryzen/) — AMD CPUID fix reference
+- [AMD-OSX Forum](https://forum.amd-osx.com) — AMD VMware community resources
