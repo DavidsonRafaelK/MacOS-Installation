@@ -11,7 +11,7 @@
 
 To install macOS on VMware Workstation, ensure you have the following:
 
-- **VMware Workstation Pro**: Virtualization software. **Now free for personal and commercial use** since May 2024.
+- **VMware Workstation Pro**: Virtualization software. Free for personal use since May 2024 and **free for personal and commercial use since November 2024** (version 17.5.2 and later).
 - **macOS Image (ISO)**: The installation image for macOS Sequoia 15.
 - **RAM**: Minimum 8 GB (16 GB recommended).
 - **Disk Space**: Minimum 70 GB of free space (200 GB recommended).
@@ -32,16 +32,17 @@ To install macOS on VMware Workstation, ensure you have the following:
 - Register for a free account if necessary.
 - Navigate to: `Dashboard > All Products > Search: VMware Workstation Pro > Download`.
 - Accept the terms and conditions, then download the installer.
-- During installation, select **"Personal Use"** when prompted for license type — no license key required.
+- No license key is required. Older 17.5.x installers ask for a license type; select **"Personal Use"** if prompted.
 
 #### 2. macOS Sequoia ISO
 - Visit [Olarila](https://www.olarila.com/) and search for **macOS Sequoia 15**.
 - Download the ISO file appropriate for your setup.
 
-#### 3. VMware Unlocker (DrDonk v4.2.7)
+#### 3. VMware Unlocker (DrDonk v4.2.8)
 - Visit the [DrDonk Unlocker Releases page](https://github.com/DrDonk/unlocker/releases).
-- Download the latest release (`unlocker427.zip` or the most recent available).
-- This version supports VMware Workstation 16/17 and is actively maintained.
+- Download the latest release (`unlocker428.zip` at the time of writing).
+- It supports VMware Workstation Pro 16/17/25/26 on Windows and Linux. It also bundles the macOS VMware Tools ISO (`darwin.iso`) used in Step 7.
+- The Unlocker does **not** add AMD CPU support. AMD users also need the CPUID lines in Step 5.
 
 > **Note**: The previously referenced `paolo-projects/unlocker` only supports VMware Workstation 11–15 and has been archived. Use the DrDonk version instead.
 
@@ -73,7 +74,7 @@ Skipping these steps on AMD will cause VMware to fail or macOS to get stuck at t
 
 #### 2. Install VMware Unlocker (DrDonk)
 - **Close VMware Workstation completely** before applying the unlocker.
-- Extract the downloaded `unlocker427.zip`.
+- Extract the downloaded Unlocker zip file.
 - Open the `windows` folder inside the extracted directory.
 - Right-click `unlock.exe` and select **"Run as administrator"**.
 - Wait for the process to complete. You should see a confirmation message when done.
@@ -116,28 +117,25 @@ This step is critical. Before booting the VM, you must edit the VMX configuratio
 
 #### For All Users (Intel and AMD):
 
-Find the line `board-id.reflectHost` and set it to `"FALSE"`. Also find `ethernet0.virtualDev` and set it to `"vmxnet3"`. Then add the following lines at the **end** of the file:
+Find `ethernet0.virtualDev` and set it to `"vmxnet3"`. If `board-id.reflectHost` already exists in the file, set it to `"FALSE"` and leave it out of the block below. Then add the following lines at the **end** of the file:
 
 ```plaintext
 smc.version = "0"
+board-id.reflectHost = "FALSE"
 board-id = "Mac-AA95B1DDAB278B95"
 hw.model.reflectHost = "FALSE"
-hw.model = "iMac20,1"
+hw.model = "iMac19,1"
 serialNumber.reflectHost = "FALSE"
 serialNumber = "C01234567890"
 ```
 
+> **Note**: `board-id` and `hw.model` must describe the same Mac. `Mac-AA95B1DDAB278B95` is the board ID of the `iMac19,1` (2019 iMac), which macOS Sequoia supports. `C01234567890` is a placeholder serial number. The VM will boot with it, but Apple services (App Store, iCloud, iMessage) may refuse to sign in.
+
 #### For AMD Processors — Additional Lines:
 
-AMD CPUs require additional CPUID masking to spoof an Intel CPU identity to the macOS kernel. Add all of the following lines at the end of the file (the general lines above **plus** these):
+AMD CPUs require additional CPUID masking to spoof an Intel CPU identity to the macOS kernel. After adding the lines above, also add the following lines at the end of the file. Do **not** repeat the lines from the previous block — each key must appear only once in the `.vmx` file.
 
 ```plaintext
-smc.version = "0"
-board-id = "Mac-AA95B1DDAB278B95"
-hw.model.reflectHost = "FALSE"
-hw.model = "iMac20,1"
-serialNumber.reflectHost = "FALSE"
-serialNumber = "C01234567890"
 cpuid.0.eax = "0000:0000:0000:0000:0000:0000:0000:1011"
 cpuid.0.ebx = "0111:0101:0110:1110:0110:0101:0100:0111"
 cpuid.0.ecx = "0110:1100:0110:0101:0111:0100:0110:1110"
@@ -148,7 +146,7 @@ cpuid.1.ecx = "1000:0010:1001:1000:0010:0010:0000:0011"
 cpuid.1.edx = "0000:0111:1000:1011:1111:1011:1111:1111"
 ```
 
-> **Why is this needed?** macOS does not officially support AMD hardware. These CPUID values spoof an Intel Core i7 identity to the macOS kernel so that it can boot normally. Without this, the VM will hang indefinitely at the Apple logo.
+> **Why is this needed?** macOS does not officially support AMD hardware. These CPUID values report a generic Intel CPU (`GenuineIntel`, family 6) identity to the macOS kernel so that it can boot normally. Without this, the VM will hang indefinitely at the Apple logo.
 
 5. Save the `.vmx` file and close the text editor.
 
