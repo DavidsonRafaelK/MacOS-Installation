@@ -11,7 +11,7 @@
 
 To install macOS on VMware Workstation, ensure you have the following:
 
-- **VMware Workstation Pro**: Virtualization software. **Now free for personal and commercial use** since May 2024.
+- **VMware Workstation Pro**: Virtualization software. Free for personal use since May 2024 and **free for personal and commercial use since November 2024** (version 17.5.2 and later).
 - **macOS Image (ISO)**: The installation image for macOS Sequoia 15.
 - **RAM**: Minimum 8 GB (16 GB recommended).
 - **Disk Space**: Minimum 70 GB of free space (200 GB recommended).
@@ -32,16 +32,44 @@ To install macOS on VMware Workstation, ensure you have the following:
 - Register for a free account if necessary.
 - Navigate to: `Dashboard > All Products > Search: VMware Workstation Pro > Download`.
 - Accept the terms and conditions, then download the installer.
-- During installation, select **"Personal Use"** when prompted for license type — no license key required.
+- No license key is required. Older 17.5.x installers ask for a license type; select **"Personal Use"** if prompted.
 
 #### 2. macOS Sequoia ISO
-- Visit [Olarila](https://www.olarila.com/) and search for **macOS Sequoia 15**.
-- Download the ISO file appropriate for your setup.
 
-#### 3. VMware Unlocker (DrDonk v4.2.7)
+Apple does not publish macOS as an ISO, so you need to build one or get one from a third party.
+
+**Option A: build the ISO yourself (recommended, needs access to a Mac)**
+
+This uses Apple's own installer, so you know exactly what is in the image. On a Mac, run in Terminal:
+
+```bash
+# Download the full Sequoia installer from Apple into /Applications
+softwareupdate --list-full-installers
+softwareupdate --fetch-full-installer --full-installer-version 15.x.x   # replace 15.x.x with a Sequoia version from the list above
+
+# Create an empty disk image, write the installer to it, and convert it to an ISO
+hdiutil create -o /tmp/Sequoia -size 17g -volname Sequoia -layout SPUD -fs HFS+J
+hdiutil attach /tmp/Sequoia.dmg -noverify -mountpoint /Volumes/Sequoia
+sudo /Applications/Install\ macOS\ Sequoia.app/Contents/Resources/createinstallmedia --volume /Volumes/Sequoia --nointeraction
+hdiutil detach "/Volumes/Install macOS Sequoia"
+hdiutil convert /tmp/Sequoia.dmg -format UDTO -o ~/Desktop/Sequoia.cdr
+mv ~/Desktop/Sequoia.cdr ~/Desktop/Sequoia.iso
+```
+
+Copy `Sequoia.iso` to your Windows machine.
+
+**Option B: download a prebuilt ISO (unofficial)**
+
+- Sites such as [Olarila](https://www.olarila.com/) offer prebuilt macOS Sequoia 15 images.
+- These are **third-party builds, not from Apple**. Their contents cannot be verified, so only use them in a VM you do not trust with personal data, and scan the download before use.
+
+> **Note**: Apple's macOS license only allows running macOS on Apple-branded hardware. Running it in VMware on a PC is for testing and learning, and you are responsible for complying with the license.
+
+#### 3. VMware Unlocker (DrDonk v4.2.8)
 - Visit the [DrDonk Unlocker Releases page](https://github.com/DrDonk/unlocker/releases).
-- Download the latest release (`unlocker427.zip` or the most recent available).
-- This version supports VMware Workstation 16/17 and is actively maintained.
+- Download the latest release (`unlocker428.zip` at the time of writing).
+- It supports VMware Workstation Pro 16/17/25/26 on Windows and Linux. It also bundles the macOS VMware Tools ISO (`darwin.iso`) used in Step 7.
+- The Unlocker does **not** add AMD CPU support. AMD users also need the CPUID lines in Step 5.
 
 > **Note**: The previously referenced `paolo-projects/unlocker` only supports VMware Workstation 11–15 and has been archived. Use the DrDonk version instead.
 
@@ -69,11 +97,11 @@ Skipping these steps on AMD will cause VMware to fail or macOS to get stuck at t
 
 #### 1. Install VMware Workstation Pro
 - Run the installer and follow the on-screen instructions.
-- Select **Personal Use** when asked about the license type.
+- If the installer asks for a license type, select **Personal Use**.
 
 #### 2. Install VMware Unlocker (DrDonk)
 - **Close VMware Workstation completely** before applying the unlocker.
-- Extract the downloaded `unlocker427.zip`.
+- Extract the downloaded Unlocker zip file.
 - Open the `windows` folder inside the extracted directory.
 - Right-click `unlock.exe` and select **"Run as administrator"**.
 - Wait for the process to complete. You should see a confirmation message when done.
@@ -94,7 +122,7 @@ Skipping these steps on AMD will cause VMware to fail or macOS to get stuck at t
    - Choose **macOS 15** as the version (or the closest available option).
 6. Name the VM (e.g., `macOS Sequoia`) and choose a storage location.
 7. Allocate system resources:
-   - **Processors**: 2 processors, 4 cores each (or half your total physical cores).
+   - **Processors**: **1 processor** with 4 cores (or up to half your total physical cores). Real Macs of this generation have a single CPU socket, so keep the number of processors at 1 and raise the cores per processor instead.
    - **Memory**: At least 8 GB (8192 MB).
 8. Configure network type: choose **NAT** or **Bridged** depending on your preference.
 9. Set up the virtual disk:
@@ -116,28 +144,25 @@ This step is critical. Before booting the VM, you must edit the VMX configuratio
 
 #### For All Users (Intel and AMD):
 
-Find the line `board-id.reflectHost` and set it to `"FALSE"`. Also find `ethernet0.virtualDev` and set it to `"vmxnet3"`. Then add the following lines at the **end** of the file:
+Find `ethernet0.virtualDev` and set it to `"vmxnet3"`. If `board-id.reflectHost` already exists in the file, set it to `"FALSE"` and leave it out of the block below. Then add the following lines at the **end** of the file:
 
 ```plaintext
 smc.version = "0"
+board-id.reflectHost = "FALSE"
 board-id = "Mac-AA95B1DDAB278B95"
 hw.model.reflectHost = "FALSE"
-hw.model = "iMac20,1"
+hw.model = "iMac19,1"
 serialNumber.reflectHost = "FALSE"
 serialNumber = "C01234567890"
 ```
 
+> **Note**: `board-id` and `hw.model` must describe the same Mac. `Mac-AA95B1DDAB278B95` is the board ID of the `iMac19,1` (2019 iMac), which macOS Sequoia supports. `C01234567890` is a placeholder serial number. The VM will boot with it, but Apple services (App Store, iCloud, iMessage) may refuse to sign in. See [Troubleshooting](#troubleshooting) to generate a realistic one.
+
 #### For AMD Processors — Additional Lines:
 
-AMD CPUs require additional CPUID masking to spoof an Intel CPU identity to the macOS kernel. Add all of the following lines at the end of the file (the general lines above **plus** these):
+AMD CPUs require additional CPUID masking to spoof an Intel CPU identity to the macOS kernel. After adding the lines above, also add the following lines at the end of the file. Do **not** repeat the lines from the previous block — each key must appear only once in the `.vmx` file.
 
 ```plaintext
-smc.version = "0"
-board-id = "Mac-AA95B1DDAB278B95"
-hw.model.reflectHost = "FALSE"
-hw.model = "iMac20,1"
-serialNumber.reflectHost = "FALSE"
-serialNumber = "C01234567890"
 cpuid.0.eax = "0000:0000:0000:0000:0000:0000:0000:1011"
 cpuid.0.ebx = "0111:0101:0110:1110:0110:0101:0100:0111"
 cpuid.0.ecx = "0110:1100:0110:0101:0111:0100:0110:1110"
@@ -148,7 +173,7 @@ cpuid.1.ecx = "1000:0010:1001:1000:0010:0010:0000:0011"
 cpuid.1.edx = "0000:0111:1000:1011:1111:1011:1111:1111"
 ```
 
-> **Why is this needed?** macOS does not officially support AMD hardware. These CPUID values spoof an Intel Core i7 identity to the macOS kernel so that it can boot normally. Without this, the VM will hang indefinitely at the Apple logo.
+> **Why is this needed?** macOS does not officially support AMD hardware. These CPUID values report a generic Intel CPU (`GenuineIntel`, family 6) identity to the macOS kernel so that it can boot normally. Without this, the VM will hang indefinitely at the Apple logo.
 
 5. Save the `.vmx` file and close the text editor.
 
@@ -193,7 +218,13 @@ After macOS is installed, installing VMware Tools will enable features such as d
 
 **VMware still shows no macOS option after running Unlocker**: Ensure VMware was fully closed before running `unlock.exe`. Re-run the unlocker as Administrator and restart VMware.
 
-**Cannot log in to the App Store**: This is a known issue in VM environments. Try going to `VM > Settings > Advanced` and enabling **"Pass power status to VM"**, then restart and attempt again.
+**Cannot sign in to the App Store, iCloud or iMessage**: Apple's servers reject the placeholder serial number `C01234567890`. To fix it, give the VM a realistic serial number for the model it pretends to be:
+1. Download [GenSMBIOS](https://github.com/corpnewt/GenSMBIOS) and run `GenSMBIOS.bat`.
+2. Generate a serial for **iMac19,1** (the same model as `hw.model` in Step 5).
+3. Check the serial at [checkcoverage.apple.com](https://checkcoverage.apple.com). It should be reported as **invalid**. If it belongs to a real Mac, generate another one so you do not clash with someone else's device.
+4. Shut down the VM, replace the `serialNumber` value in the `.vmx` file, and boot again.
+
+Sign-in can still fail from a VM even with a good serial number, as Apple may block virtual machines.
 
 ---
 
